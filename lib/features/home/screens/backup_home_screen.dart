@@ -9,7 +9,7 @@ import 'package:flutter_coder/features/converter/components/action_button.dart';
 import 'package:flutter_coder/features/converter/components/app_textfield.dart';
 import 'package:flutter_coder/features/converter/components/code_detail_item.dart';
 import 'package:flutter_coder/features/converter/components/code_tab_bar.dart';
-import 'package:flutter_coder/features/converter/utils/code_utils.dart';
+import 'package:flutter_coder/features/converter/utils/flutter_code_utils.dart';
 import 'package:flutter_coder/features/converter/utils/constants_utils.dart';
 import 'package:flutter_coder/features/shared/utils/extensions.dart';
 import 'package:flutter_coder/features/converter/utils/utils.dart';
@@ -93,7 +93,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   //       ? double.parse(_radiusController.text)
   //       : 0;
   //   _outputController.text =
-  //       getDetailsResult(string, currentType, radius, circular, clickable);
+  //       getFlutterDetailsResult(string, currentType, radius, circular, clickable);
   //   setState(() {});
   // }
   void updateContants(String value) {
@@ -283,13 +283,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     //   clickable: false,
     //   childrenCodeDetails: codeDetails,
     // );
-    final result = getDetailsResult(currentDetail!, null, null);
+    final result = getFlutterDetailsResult(currentDetail!, null, null);
     final type = result.output.contains("(")
         ? result.output.substring(0, result.output.indexOf("("))
         : "Default";
     currentDetail!.type = type;
 
-    _outputController.text = reformatString(result.output);
+    _outputController.text = reformatFlutterString(result.output);
     if (!_inputController.text.endsWith("\n")) {
       _inputController.text += "\n";
     }

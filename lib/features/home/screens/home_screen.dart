@@ -10,11 +10,12 @@ import 'package:flutter_coder/features/converter/components/action_button.dart';
 import 'package:flutter_coder/features/converter/components/app_textfield.dart';
 import 'package:flutter_coder/features/converter/components/code_detail_item.dart';
 import 'package:flutter_coder/features/converter/components/code_tab_bar.dart';
-import 'package:flutter_coder/features/converter/utils/code_utils.dart';
+import 'package:flutter_coder/features/converter/utils/flutter_code_utils.dart';
 import 'package:flutter_coder/features/converter/utils/constants_utils.dart';
 import 'package:flutter_coder/features/converter/views/code_input.dart';
 import 'package:flutter_coder/features/editor/views/code_editor.dart';
 import 'package:flutter_coder/features/emulator/views/emulator_view.dart';
+import 'package:flutter_coder/features/shared/providers/framework_provider.dart';
 import 'package:flutter_coder/features/shared/utils/extensions.dart';
 import 'package:flutter_coder/features/converter/utils/utils.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -70,8 +71,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     });
   }
 
+  void updateFramework(CodeFramework? framework) {
+    if (framework == null) return;
+    ref.read(frameworkProvider.notifier).updateFrameWork(framework);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final framework = ref.watch(frameworkProvider);
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -94,7 +101,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 ),
               ],
             ),
-            ThemeSwitch(theme: theme, onChange: updateTheme)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButton<CodeFramework>(
+                  value: framework,
+                  items: CodeFramework.values
+                      .map((e) => DropdownMenuItem<CodeFramework>(
+                          value: e, child: Text(e.name)))
+                      .toList(),
+                  onChanged: updateFramework,
+                ),
+                const SizedBox(
+                  width: 10,
+                ),
+                ThemeSwitch(theme: theme, onChange: updateTheme)
+              ],
+            ),
           ],
         ),
       ),

@@ -1,21 +1,22 @@
 import 'dart:math';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_coder/features/converter/components/action_button.dart';
 import 'package:flutter_coder/features/converter/components/app_textfield.dart';
 import 'package:flutter_coder/features/converter/components/code_detail_item.dart';
 import 'package:flutter_coder/features/converter/components/code_tab_bar.dart';
-import 'package:flutter_coder/features/converter/utils/code_utils.dart';
+import 'package:flutter_coder/features/converter/models/details_result.dart';
+import 'package:flutter_coder/features/converter/utils/flutter_code_utils.dart';
 import 'package:flutter_coder/features/converter/utils/constants_utils.dart';
 import 'package:flutter_coder/features/converter/utils/model_utils.dart';
+import 'package:flutter_coder/features/converter/utils/react_code_utils.dart';
 import 'package:flutter_coder/features/shared/providers/editor_text_provider.dart';
+import 'package:flutter_coder/features/shared/providers/framework_provider.dart';
 import 'package:flutter_coder/features/shared/utils/extensions.dart';
 import 'package:flutter_coder/features/converter/utils/utils.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:html/parser.dart';
 
 import '../../converter/components/theme_switch.dart';
 import '../../../main.dart';
@@ -251,15 +252,48 @@ class _CodeInputViewState extends ConsumerState<CodeInputView>
     //   clickable: false,
     //   childrenCodeDetails: codeDetails,
     // );
-    final result = getDetailsResult(currentDetail!, null, null);
-    final type = result.output.contains("(")
-        ? result.output.substring(0, result.output.indexOf("("))
-        : "Default";
-    currentDetail!.type = type;
+    final framework = ref.read(frameworkProvider);
+    DetailsResult result;
+    switch (framework) {
+      case CodeFramework.flutter:
+        result = getFlutterDetailsResult(currentDetail!, null, null);
 
-    ref
-        .read(editorTextProvider.notifier)
-        .updateText(reformatString(result.output));
+        break;
+      case CodeFramework.react:
+        result = getReactDetailsResult(currentDetail!, null, null, false);
+
+        break;
+      case CodeFramework.tailwind:
+        result = getTailwindDetailsResult(currentDetail!, null, null);
+
+        break;
+      case CodeFramework.htmlAndCss:
+        result = getHtmlAndCssDetailsResult(currentDetail!, null, null);
+        break;
+      case CodeFramework.reactNative:
+        result = getReactDetailsResult(currentDetail!, null, null, true);
+        break;
+    }
+    String type = "Default";
+    if (result.output.contains("(")) {
+      type = result.output.substring(0, result.output.indexOf("("));
+    }
+    if (result.output.startsWith("<") && result.output.contains(" ")) {
+      type = result.output.substring(1, result.output.indexOf(" "));
+    }
+
+    currentDetail!.type = type;
+    String output = "";
+    if (framework.isFlutter) {
+      output = reformatFlutterString(result.output);
+    } else {
+      // output = reformatReactString(result.output);
+      // final document = parse(result.output);
+      // output = document.outerHtml;
+      output = result.output;
+    }
+
+    ref.read(editorTextProvider.notifier).updateText(output);
 
     if (!_inputController.text.endsWith("\n")) {
       _inputController.text += "\n";
@@ -328,6 +362,7 @@ class _CodeInputViewState extends ConsumerState<CodeInputView>
 
   @override
   Widget build(BuildContext context) {
+    //regetOutput();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

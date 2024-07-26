@@ -107,6 +107,21 @@ extension StringExtension on String {
     return newString;
   }
 
+  String get toSnakeCase {
+    String newString = this[0].toLowerCase();
+    for (int i = 1; i < length; i++) {
+      final char = this[i];
+      if (char != "-" &&
+          char == char.toUpperCase() &&
+          char != char.toLowerCase()) {
+        newString += "-${char.toLowerCase()}";
+      } else {
+        newString += char;
+      }
+    }
+    return newString;
+  }
+
   String capitalize() {
     return isEmpty ? "" : "${this[0].toUpperCase()}${substring(1)}";
   }
@@ -152,11 +167,47 @@ extension StringExtension on String {
     }
   }
 
+  String get toReactColor {
+    if (isEmpty) return "";
+    String string = this;
+    //String opacityString = "";
+    if (startsWith("rgb")) {
+      string = toHex;
+    }
+    if (startsWith("#")) {
+      string = string.substring(1);
+    }
+    // if (startsWith("#") && length == 8) {
+    //   opacityString = substring(0, 2);
+    //   string = string.substring(2);
+    // }
+    if (string == "#FFFFFF") {
+      return "white";
+    }
+    if (string == "#000000") {
+      return "black";
+    }
+    if (string == "#00000000") {
+      return "transparent";
+    }
+
+    final actualColor = constants[string] ?? string;
+    return actualColor;
+  }
+
   String get toColor {
     if (isEmpty) return "";
     String string = this;
+    String opacityString = "";
     if (startsWith("rgb")) {
       string = toHex;
+    }
+    if (startsWith("#")) {
+      string = string.substring(1);
+    }
+    if (startsWith("#") && length == 8) {
+      opacityString = substring(0, 2);
+      string = string.substring(2);
     }
     if (string == "#FFFFFF") {
       return "Colors.white";
@@ -168,8 +219,14 @@ extension StringExtension on String {
       return "Colors.transparent";
     }
 
-    final color = "Color(0xFF${string.substring(1)})";
-    return constants[color] ?? color;
+    final color = "Color(0xFF$string)";
+    final actualColor = constants[color] ?? color;
+    if (opacityString.isNotEmpty) {
+      final opacityInt = int.parse(opacityString, radix: 16) / 255.0;
+      return "$actualColor.withOpacity($opacityInt)";
+    } else {
+      return actualColor;
+    }
   }
 
   String get toHex {
@@ -177,7 +234,10 @@ extension StringExtension on String {
     final closeIndex = indexOf(")");
     if (openIndex == -1 || closeIndex == -1) return "";
     final detailsString = substring(openIndex + 1, closeIndex);
-    final details = detailsString.split(",");
+    final details = detailsString.contains(",")
+        ? detailsString.split(",")
+        : detailsString.split(" ");
+    if (details.length < 3) return "";
     int r = details[0].trim().toInt;
     int g = details[1].trim().toInt;
     int b = details[2].trim().toInt;

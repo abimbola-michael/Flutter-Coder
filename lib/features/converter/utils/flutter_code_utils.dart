@@ -5,7 +5,7 @@ import 'package:flutter_coder/features/converter/models/details_result.dart';
 import 'package:flutter_coder/features/shared/utils/extensions.dart';
 import '../models/code_detail.dart';
 
-String reformatString(String string) {
+String reformatFlutterString(String string) {
   String formattedString = "";
   int tabs = 0;
   bool needsTab = false;
@@ -101,7 +101,7 @@ Map<String, String> getDefaults(String string) {
   return properties;
 }
 
-DetailsResult getDetailsResult(
+DetailsResult getFlutterDetailsResult(
     CodeDetail detail, double? totalWidth, double? totalHeight) {
   String string = detail.string;
   String type = detail.type;
@@ -254,11 +254,13 @@ DetailsResult getDetailsResult(
     final value = isSame || textAlign == "left"
         ? ""
         : "textAlign: TextAlign.$textAlign,\n";
-    if (i < textStyleAttributes.length) {
-      textStyleAttributes[i] += value;
-    } else {
-      textStyleAttributes.add(value);
-    }
+
+    attributes += value;
+    // if (i < textStyleAttributes.length) {
+    //   textStyleAttributes[i] += value;
+    // } else {
+    //   textStyleAttributes.add(value);
+    // }
   }
 
   final colors = (properties["background"] ?? properties["color"]) ?? [];
@@ -305,7 +307,12 @@ DetailsResult getDetailsResult(
           for (int i = 1; i < color.length; i++) {
             final colorValue = color[i].replaceAll(")", "");
             if (colorValue.contains("%")) {
-              stops.add(colorValue.substring(0, colorValue.indexOf("%")));
+              final percentString =
+                  colorValue.substring(0, colorValue.indexOf("%"));
+              final stopString = double.tryParse(percentString) != null
+                  ? (double.parse(percentString) / 100).toString()
+                  : percentString;
+              stops.add(stopString);
             } else {
               colors.add(colorValue);
             }
@@ -313,7 +320,7 @@ DetailsResult getDetailsResult(
 
           String colorsString = colors.map((col) => col.toColor).join(",\n");
 
-          gradientAttr += "colors: const [\n$colorsString]";
+          gradientAttr += "colors: const [\n$colorsString],\n";
 
           if (stops.isNotEmpty) {
             String stopsString = stops.map((stop) => stop).join(",\n");
@@ -569,7 +576,7 @@ DetailsResult getDetailsResult(
   if (detail.childrenCodeDetails.isNotEmpty) {
     for (int i = 0; i < detail.childrenCodeDetails.length; i++) {
       final childDetail = detail.childrenCodeDetails[i];
-      final result = getDetailsResult(childDetail, width, height);
+      final result = getFlutterDetailsResult(childDetail, width, height);
       results.add(result);
     }
   }
